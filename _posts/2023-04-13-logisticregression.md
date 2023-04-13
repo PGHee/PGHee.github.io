@@ -818,3 +818,144 @@ Observations
 
   - 확률 < 0.5이면 클래스 0 - 비가 오지 않을 확률이 예측됩니다.
 
+```python
+y_pred_prob_df = pd.DataFrame(data=y_pred_prob, columns=['Prob of - No rain tomorrow (0)', 'Prob of - Rain tomorrow (1)'])
+y_pred_prob_df
+logreg.predict_proba(X_test)[0:10, 1]
+y_pred1 = logreg.predict_proba(X_test)[:, 1]
+plt.rcParams['font.size'] = 12
+plt.hist(y_pred1, bins = 10)
+plt.title('Histogram of predicted probabilities of rain')
+plt.xlim(0,1)
+plt.xlabel('Predicted probabilities of rain')
+plt.ylabel('Frequency')
+```
+
+관측 결과
+
+이전 히스토그램에서는 매우 양의 왜도가 있는 것으로 나타났습니다.
+
+첫 번째 열은 약 0.0과 0.1 사이의 확률을 가진 약 15,000개의 관측치가 있음을 보여줍니다.
+
+확률이 0.5보다 높은 관측치는 적습니다.
+
+따라서 이 작은 수의 관측치는 내일 비가 올 것으로 예측합니다.
+
+대다수의 관측치는 내일 비가 오지 않을 것으로 예측합니다.
+
+임계값 낮춤
+
+```python
+from sklearn.preprocessing import binarize
+for i in range(1,5):
+    cm1=0
+    y_pred1 = logreg.predict_proba(X_test)[:,1]
+    y_pred1 = y_pred1.reshape(-1,1)
+    y_pred2 = binarize(y_pred1, i/10)
+    y_pred2 = np.where(y_pred2 == 1, 'Yes', 'No')
+    cm1 = confusion_matrix(y_test, y_pred2)
+    print ('With',i/10,'threshold the Confusion Matrix is ','\n\n',cm1,'\n\n',
+            'with',cm1[0,0]+cm1[1,1],'correct predictions, ', '\n\n', 
+            cm1[0,1],'Type I errors( False Positives), ','\n\n',
+            cm1[1,0],'Type II errors( False Negatives), ','\n\n',
+           'Accuracy score: ', (accuracy_score(y_test, y_pred2)), '\n\n',
+           'Sensitivity: ',cm1[1,1]/(float(cm1[1,1]+cm1[1,0])), '\n\n',
+           'Specificity: ',cm1[0,0]/(float(cm1[0,0]+cm1[0,1])),'\n\n',
+            '====================================================', '\n\n')
+```
+
+평가
+- 이진 분류 문제에서는 기본적으로 0.5의 임계값을 사용하여 예측된 확률을 클래스 예측으로 변환합니다.
+- 임계값은 민감도 또는 특이도를 증가시키기 위해 조정될 수 있습니다.
+- 민감도와 특이도는 서로 반비례 관계에 있습니다. 한 쪽을 증가시키면 항상 다른 하나가 감소하고 그 반대도 마찬가지입니다.
+- 임계값을 높이면 정확도가 높아짐을 확인할 수 있습니다.
+- 모델 구축 프로세스에서 임계값 조정은 마지막 단계 중 하나여야 합니다.
+
+## 18. ROC - AUC
+
+ROC 곡선
+
+ROC Curve는 분류 모델의 성능을 시각적으로 측정하는 또 다른 도구입니다. ROC Curve는 Receiver Operating Characteristic Curve의 약어로, 분류 임계값 레벨에서의 분류 모델 성능을 보여주는 그래프입니다.
+
+ROC Curve는 다양한 분류 임계값 레벨에서 TPR(True Positive Rate)을 FPR(False Positive Rate)에 대한 plot으로 나타냅니다.
+
+TPR(True Positive Rate)은 Recall이라고도 불리며, TP를 (TP + FN)으로 나눈 비율로 정의됩니다.
+
+FPR(False Positive Rate)은 FP를 (FP + TN)으로 나눈 비율로 정의됩니다.
+
+ROC Curve에서는 단일 지점의 TPR(True Positive Rate)과 FPR(False Positive Rate)에 초점을 맞춥니다. 이는 다양한 임계값 레벨에서의 TPR과 FPR로 구성된 ROC Curve의 일반적인 성능을 나타냅니다. 따라서 ROC Curve는 다양한 분류 임계값 레벨에서 TPR 대 FPR을 나타냅니다. 임계값을 낮추면 더 많은 항목이 양성으로 분류될 수 있습니다. 이는 True Positive (TP)와 False Positive (FP)를 둘 다 증가시킬 것입니다.
+
+```python
+from sklearn.metrics import roc_curve
+fpr, tpr, thresholds = roc_curve(y_test, y_pred1, pos_label = 'Yes')
+plt.figure(figsize=(6,4))
+plt.plot(fpr, tpr, linewidth=2)
+plt.plot([0,1], [0,1], 'k--' )
+plt.rcParams['font.size'] = 12
+plt.title('ROC curve for RainTomorrow classifier')
+plt.xlabel('False Positive Rate (1 - Specificity)')
+plt.ylabel('True Positive Rate (Sensitivity)')
+plt.show()
+```
+
+ROC 곡선은 특정 문맥에서 민감도와 특이도를 균형있게 조절하는 임계값을 선택하는 데 도움이 됩니다.
+
+ROC-AUC는 수신자 조작 특성 곡선 - 곡선 아래 영역을 나타내는 용어입니다. 분류기 성능을 비교하는 기술 중 하나입니다. 이 기술에서는 곡선 아래 영역(AUC)을 측정합니다. 완벽한 분류기는 ROC AUC가 1이 되고, 순전히 무작위 분류기는 ROC AUC가 0.5가 됩니다.
+
+따라서 ROC AUC는 ROC 그림에서 곡선 아래의 영역의 백분율입니다.
+
+```python
+from sklearn.metrics import roc_auc_score
+ROC_AUC = roc_auc_score(y_test, y_pred1)
+print('ROC AUC : {:.4f}'.format(ROC_AUC))
+```
+
+평가
+- ROC AUC는 분류 모델의 성능을 요약한 단일 숫자입니다. 값이 높을수록 분류기의 성능이 좋습니다.
+- 우리 모델의 ROC AUC는 1에 가까워지므로, 내일 비가 올 확률을 예측하는 데 분류기가 잘 작동한다는 결론을 내릴 수 있습니다.
+
+```python
+from sklearn.model_selection import cross_val_score
+Cross_validated_ROC_AUC = cross_val_score(logreg, X_train, y_train, cv=5, scoring='roc_auc').mean()
+print('Cross validated ROC AUC : {:.4f}'.format(Cross_validated_ROC_AUC))
+```
+
+## 19. k-Fold 교차 검증
+
+```python
+from sklearn.model_selection import cross_val_score
+scores = cross_val_score(logreg, X_train, y_train, cv = 5, scoring='accuracy')
+print('Cross-validation scores:{}'.format(scores))
+```
+
+교차 검증 정확도를 평균화하여 요약할 수 있습니다.
+
+```python
+print('Average cross-validation score: {:.4f}'.format(scores.mean()))
+```
+
+원래 모델의 점수는 0.8476으로 나타났습니다. 교차 검증의 평균 점수는 0.8474입니다. 따라서, 교차 검증은 성능 향상을 가져오지 않는 것으로 결론을 내릴 수 있습니다.
+
+## 20. 그리드서치 CV를 사용한 하이퍼파라미터 최적화
+
+```python
+from sklearn.model_selection import GridSearchCV
+parameters = [{'penalty':['l1','l2']}, 
+              {'C':[1, 10, 100, 1000]}]
+grid_search = GridSearchCV(estimator = logreg,  
+                           param_grid = parameters,
+                           scoring = 'accuracy',
+                           cv = 5,
+                           verbose=0)
+grid_search.fit(X_train, y_train)
+print('GridSearch CV best score : {:.4f}\n\n'.format(grid_search.best_score_))
+print('Parameters that give the best results :','\n\n', (grid_search.best_params_))
+print('\n\nEstimator that was chosen by the search :','\n\n', (grid_search.best_estimator_))
+print('GridSearch CV score on test set: {0:0.4f}'.format(grid_search.score(X_test, y_test)))
+```
+
+평가
+- 원래 모델의 테스트 정확도는 0.8501이고, GridSearch CV 정확도는 0.8507입니다. 
+- 이를 통해 GridSearch CV가 이 모델의 성능을 개선시켰다는 것을 확인할 수 있습니다.
+
+
