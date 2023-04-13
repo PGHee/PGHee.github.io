@@ -406,3 +406,415 @@ print('WindSpeed3pm outliers are values < {lowerboundary} or > {upperboundary}'.
 ```
 
 WindSpeed3pm의 최소값은 0.0이고 최대값은 87.0입니다. 따라서, 이상치는 57.0보다 큰 값입니다.
+
+## 8. 특성 벡터와 목표 변수 선언
+
+```python
+X = df.drop(['RainTomorrow'], axis=1)
+y = df['RainTomorrow']
+```
+
+## 9. 데이터를 훈련 세트와 테스트 세트로 분할
+
+```python
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
+X_train.shape, X_test.shape
+```
+
+## 10. 특성 엔지니어링
+
+특성 엔지니어링은 원시 데이터를 유용한 피처로 변환하여 모델을 더 잘 이해하고 예측 능력을 향상시키는 과정입니다. 서로 다른 유형의 변수에 대해 특성 엔지니어링을 수행할 것입니다.
+
+먼저 범주형 변수와 수치형 변수를 다시 따로 표시하겠습니다.
+
+```python
+X_train.dtypes
+categorical = [col for col in X_train.columns if X_train[col].dtypes == 'O']
+categorical
+numerical = [col for col in X_train.columns if X_train[col].dtypes != 'O']
+numerical
+```
+
+숫자 변수의 결측값 엔지니어링
+
+```python
+X_train[numerical].isnull().sum()
+X_test[numerical].isnull().sum()
+for col in numerical:
+    if X_train[col].isnull().mean()>0:
+        print(col, round(X_train[col].isnull().mean(),4))
+```
+
+가정:
+데이터가 완전히 랜덤으로 누락되었다고 가정합니다(MCAR). 결측값을 대치하는 데 사용될 수 있는 두 가지 방법이 있습니다. 하나는 평균이나 중간값 대치이고, 다른 하나는 무작위 표본 대치입니다. 데이터셋에 이상치가 있는 경우 중간값 대치를 사용해야 합니다. 따라서 중간값 대치를 사용할 것입니다. 중간값 대치는 이상치에 강건하기 때문입니다.
+
+저는 적절한 통계적 측정치, 즉 중간값으로 결측값을 대체할 것입니다. 결측값 대치는 학습 세트에서 수행한 후, 테스트 세트로 전파되어야 합니다. 즉, 결측값을 채우기 위해 사용되는 통계적 측정치는 학습 세트에서만 추출되어 학습 세트와 테스트 세트 모두에 적용되어야 합니다. 이는 과적합을 피하기 위한 것입니다.
+
+```python
+for df1 in [X_train, X_test]:
+    for col in numerical:
+        col_median=X_train[col].median()
+        df1[col].fillna(col_median, inplace=True)           
+X_train[numerical].isnull().sum()
+X_test[numerical].isnull().sum()
+```
+
+지금은 학습 세트와 테스트 세트의 숫자 열에서 결측값이 없는 것으로 보입니다.
+
+범주형 변수에서 결측값 처리 방법에 대해 알아봅시다.
+
+```python
+X_train[categorical].isnull().mean()
+for col in categorical:
+    if X_train[col].isnull().mean()>0:
+        print(col, (X_train[col].isnull().mean()))
+for df2 in [X_train, X_test]:
+    df2['WindGustDir'].fillna(X_train['WindGustDir'].mode()[0], inplace=True)
+    df2['WindDir9am'].fillna(X_train['WindDir9am'].mode()[0], inplace=True)
+    df2['WindDir3pm'].fillna(X_train['WindDir3pm'].mode()[0], inplace=True)
+    df2['RainToday'].fillna(X_train['RainToday'].mode()[0], inplace=True)
+X_train[categorical].isnull().sum()
+X_test[categorical].isnull().sum()
+```
+
+마지막으로 X_train 및 X_test에서 결측값이 있는지 확인하겠습니다.
+
+```python
+X_train.isnull().sum()
+X_test.isnull().sum()
+```
+
+X_train 및 X_test에서 결측값이 없는 것을 확인할 수 있습니다.
+
+숫자 변수의 이상치 처리
+
+Rainfall, Evaporation, WindSpeed9am 및 WindSpeed3pm 열에 이상치가 있다는 것을 알았습니다. 이러한 변수에서 최대 값을 제한하고 이상치를 제거하기 위해 상위 코딩(top-coding) 접근법을 사용할 것입니다.
+
+```python
+def max_value(df3, variable, top):
+    return np.where(df3[variable]>top, top, df3[variable])
+for df3 in [X_train, X_test]:
+    df3['Rainfall'] = max_value(df3, 'Rainfall', 3.2)
+    df3['Evaporation'] = max_value(df3, 'Evaporation', 21.8)
+    df3['WindSpeed9am'] = max_value(df3, 'WindSpeed9am', 55)
+    df3['WindSpeed3pm'] = max_value(df3, 'WindSpeed3pm', 57)
+X_train.Rainfall.max(), X_test.Rainfall.max()
+X_train.Evaporation.max(), X_test.Evaporation.max()
+X_train.WindSpeed9am.max(), X_test.WindSpeed9am.max()
+X_train.WindSpeed3pm.max(), X_test.WindSpeed3pm.max()
+X_train[numerical].describe()
+```
+
+이제 Rainfall, Evaporation, WindSpeed9am 및 WindSpeed3pm 열의 이상치가 최대 값으로 제한된 것을 볼 수 있습니다.
+
+범주형 변수 인코딩
+
+```python
+categorical
+X_train[categorical].head()
+import category_encoders as ce
+encoder = ce.BinaryEncoder(cols=['RainToday'])
+X_train = encoder.fit_transform(X_train)
+X_test = encoder.transform(X_test)
+X_train.head()
+```
+
+RainToday 변수에서 RainToday_0과 RainToday_1이라는 두 가지 추가 변수가 생성된 것을 볼 수 있습니다.
+
+이제 X_train 학습 세트를 만들겠습니다.
+
+```python
+X_train = pd.concat([X_train[numerical], X_train[['RainToday_0', 'RainToday_1']],
+                     pd.get_dummies(X_train.Location), 
+                     pd.get_dummies(X_train.WindGustDir),
+                     pd.get_dummies(X_train.WindDir9am),
+                     pd.get_dummies(X_train.WindDir3pm)], axis=1)
+X_train.head()
+```
+
+마찬가지로 X_test 테스트 세트를 만들겠습니다.
+
+```python
+X_test = pd.concat([X_test[numerical], X_test[['RainToday_0', 'RainToday_1']],
+                     pd.get_dummies(X_test.Location), 
+                     pd.get_dummies(X_test.WindGustDir),
+                     pd.get_dummies(X_test.WindDir9am),
+                     pd.get_dummies(X_test.WindDir3pm)], axis=1)
+X_test.head()
+```
+
+이제 모델 구축을 위한 학습 및 테스트 세트가 준비되었습니다. 그 전에, 모든 특성 변수를 동일한 척도로 매핑해야 합니다. 이를 feature scaling이라고 합니다. 다음과 같이 수행하겠습니다.
+
+## 11. 특성 스케일링 (Feature Scaling)
+
+```python
+X_train.describe()
+cols = X_train.columns
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+X_train = pd.DataFrame(X_train, columns=[cols])
+X_test = pd.DataFrame(X_test, columns=[cols])
+X_train.describe()
+```
+이제 Logistic Regression 분류기에 입력할 준비가 된 X_train 데이터셋이 있습니다. 다음과 같이 수행하겠습니다.
+
+## 12. 모델 학습
+
+```python
+from sklearn.linear_model import LogisticRegression
+logreg = LogisticRegression(solver='liblinear', random_state=0)
+logreg.fit(X_train, y_train)
+```
+
+## 13. 결과 예측
+
+```python
+y_pred_test = logreg.predict(X_test)
+y_pred_test
+```
+
+predict_proba 메서드는 배열 형태로 대상 변수(이 경우 0과 1)의 확률을 제공합니다.
+
+0은 비가 오지 않을 확률, 1은 비가 올 확률입니다.
+
+```python
+logreg.predict_proba(X_test)[:,0]
+logreg.predict_proba(X_test)[:,1]
+```
+
+## 14. 정확도 점수 확인
+
+```python
+from sklearn.metrics import accuracy_score
+print('Model accuracy score: {0:0.4f}'. format(accuracy_score(y_test, y_pred_test)))
+```
+
+여기서, y_test는 테스트 세트의 실제 클래스 레이블이고 y_pred_test는 예측된 클래스 레이블입니다.
+
+학습 세트와 테스트 세트의 정확도 비교
+
+이제 학습 세트와 테스트 세트의 정확도를 비교하여 과적합 여부를 확인하겠습니다.
+
+```python
+y_pred_train = logreg.predict(X_train)
+y_pred_train
+print('Training-set accuracy score: {0:0.4f}'. format(accuracy_score(y_train, y_pred_train)))
+```
+
+과적합과 과소적합 확인하기
+
+```python
+print('Training set score: {:.4f}'.format(logreg.score(X_train, y_train)))
+print('Test set score: {:.4f}'.format(logreg.score(X_test, y_test)))
+```
+
+학습 세트의 정확도 점수는 0.8476이고, 테스트 세트의 정확도 점수는 0.8501입니다. 이 두 값은 매우 비슷합니다. 따라서, 과적합의 문제가 없습니다.
+
+로지스틱 회귀에서는 C = 1의 기본값을 사용합니다. 이는 학습 세트와 테스트 세트 모두 약 85%의 정확도를 제공합니다. 그러나, 학습 세트와 테스트 세트의 모델 성능이 매우 비슷합니다. 이는 과소적합의 가능성이 있습니다.
+
+따라서, C를 증가시켜 보다 유연한 모델을 적합해 보겠습니다.
+
+```python
+logreg100 = LogisticRegression(C=100, solver='liblinear', random_state=0)
+logreg100.fit(X_train, y_train)
+print('Training set score: {:.4f}'.format(logreg100.score(X_train, y_train)))
+print('Test set score: {:.4f}'.format(logreg100.score(X_test, y_test)))
+```
+
+C=100으로 설정했을 때 테스트 세트 정확도가 더 높으며 약간의 향상된 훈련 세트 정확도를 보입니다. 따라서 더 복잡한 모델이 더 잘 수행될 것으로 결론을 내릴 수 있습니다.
+
+이제 C=1의 기본값보다 더 정규화된 모델을 사용하여 조사해 보겠습니다. C=0.01로 설정합니다.
+
+```python
+logreg001 = LogisticRegression(C=0.01, solver='liblinear', random_state=0)
+logreg001.fit(X_train, y_train)
+print('Training set score: {:.4f}'.format(logreg001.score(X_train, y_train)))
+print('Test set score: {:.4f}'.format(logreg001.score(X_test, y_test)))
+```
+
+만약 C=0.01과 같이 보다 규제화된 모델을 사용한다면, 기본 매개변수 대비 학습 및 테스트 세트의 정확도가 감소합니다.
+
+모델 정확도를 null 정확도와 비교합니다. null 정확도는 항상 가장 빈번한 클래스를 예측하는 것으로 얻을 수 있는 정확도입니다.
+
+따라서 먼저 테스트 세트에서 클래스 분포를 확인해야합니다.
+
+```python
+y_test.value_counts()
+```
+
+가장 빈번한 클래스의 발생 횟수는 22067입니다. 따라서, 전체 발생 횟수로 나누어 22067을 계산하여 Null Accuracy를 계산할 수 있습니다.
+
+```python
+null_accuracy = (22067/(22067+6372))
+print('Null accuracy score: {0:0.4f}'. format(null_accuracy))
+```
+
+모델 정확도 점수가 0.8501이고 널 정확도 점수가 0.7759임을 확인할 수 있습니다. 따라서 로지스틱 회귀 모델이 클래스 레이블을 예측하는 데 매우 잘 작동하고 있다고 결론 짓을 수 있습니다.
+
+이제 위의 분석을 바탕으로 우리의 분류 모델 정확도가 매우 우수하다는 결론을 내릴 수 있습니다. 우리 모델은 클래스 레이블을 예측하는 데 매우 잘 작동하고 있습니다.
+
+하지만 이는 값의 분포에 대한 정보를 제공하지 않습니다. 또한 분류기가 만드는 오류 유형에 대해서도 알려주지 않습니다.
+
+이를 보완하기 위한 Confusion matrix라는 또 다른 도구가 있습니다.
+
+## 15. Confusion matrix
+
+혼동 행렬은 분류 알고리즘의 성능을 요약하는 도구입니다. 혼동 행렬은 분류 모델의 성능과 모델이 생성하는 오류 유형에 대한 명확한 그림을 제공합니다. 이는 각 범주별로 올바른 및 부정확한 예측을 요약한 것입니다. 이 요약은 표 형태로 나타납니다.
+
+분류 모델 성능을 평가하는 동안 네 가지 결과가 가능합니다. 이 네 가지 결과는 아래와 같이 설명됩니다.
+
+True Positives (TP) – True Positives는 관측치가 특정 클래스에 속한다고 예측하고, 관측치가 실제로 그 클래스에 속하는 경우 발생합니다.
+
+True Negatives (TN) – True Negatives는 관측치가 특정 클래스에 속하지 않는다고 예측하고, 관측치가 실제로 그 클래스에 속하지 않는 경우 발생합니다.
+
+False Positives (FP) – False Positives는 관측치가 특정 클래스에 속한다고 예측하지만, 관측치가 실제로 그 클래스에 속하지 않는 경우 발생합니다. 이러한 유형의 오류는 제 1종 오류라고 합니다.
+
+False Negatives (FN) – False Negatives는 관측치가 특정 클래스에 속하지 않는다고 예측하고, 관측치가 실제로 그 클래스에 속하는 경우 발생합니다. 이는 매우 심각한 오류이며 제 2종 오류라고 합니다.
+
+이 네 가지 결과는 아래에 제공된 혼동 행렬에서 요약됩니다.
+
+```python
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(y_test, y_pred_test)
+print('Confusion matrix\n\n', cm)
+print('\nTrue Positives(TP) = ', cm[0,0])
+print('\nTrue Negatives(TN) = ', cm[1,1])
+print('\nFalse Positives(FP) = ', cm[0,1])
+print('\nFalse Negatives(FN) = ', cm[1,0])
+```
+
+혼동 행렬은 20892 + 3285 = 24177개의 올바른 예측과 3087 + 1175 = 4262개의 잘못된 예측을 보여줍니다.
+
+이 경우, 다음과 같습니다.
+
+- True Positives (실제 Positive:1 및 예측 Positive:1) - 20892
+- True Negatives (실제 Negative:0 및 예측 Negative:0) - 3285
+- False Positives (실제 Negative:0 but 예측 Positive:1) - 1175 (1형 오류)
+- False Negatives (실제 Positive:1 but 예측 Negative:0) - 3087 (2형 오류)
+
+```python
+cm_matrix = pd.DataFrame(data=cm, columns=['Actual Positive:1', 'Actual Negative:0'], 
+                                 index=['Predict Positive:1', 'Predict Negative:0'])
+sns.heatmap(cm_matrix, annot=True, fmt='d', cmap='YlGnBu')
+```
+
+## 16. 분류 지표
+
+분류 보고서
+
+분류 보고서는 분류 모델의 성능을 평가하는 또 다른 방법입니다. 모델의 정밀도(precision), 재현율(recall), f1 점수 및 지원(support) 점수를 표시합니다. 나중에 이 용어들에 대해 설명하겠습니다.
+
+분류 보고서는 다음과 같이 출력할 수 있습니다.
+
+```python
+from sklearn.metrics import classification_report
+print(classification_report(y_test, y_pred_test))
+```
+
+분류 정확도 (Classification accuracy)
+
+```python
+TP = cm[0,0]
+TN = cm[1,1]
+FP = cm[0,1]
+FN = cm[1,0]
+classification_accuracy = (TP + TN) / float(TP + TN + FP + FN)
+print('Classification accuracy : {0:0.4f}'.format(classification_accuracy))
+```
+
+Classification error
+
+```python
+classification_error = (FP + FN) / float(TP + TN + FP + FN)
+print('Classification error : {0:0.4f}'.format(classification_error))
+```
+
+정밀도
+
+정밀도는 예측한 양성 중 올바르게 예측한 비율입니다. 이는 true positives(TP)를 true positives와 false positives(TP+FP)의 합으로 나눈 비율로 표시할 수 있습니다.
+
+따라서, 정밀도는 올바르게 예측한 양성 결과의 비율을 나타냅니다. 이는 음성 클래스보다는 양성 클래스에 더 관심이 있습니다.
+
+수학적으로, 정밀도는 TP/(TP+FP)로 정의될 수 있습니다.
+
+```python
+precision = TP / float(TP + FP)
+print('Precision : {0:0.4f}'.format(precision))
+```
+
+Recall
+
+Recall는 모든 실제 양성 결과 중에서 올바르게 예측된 양성 결과의 백분율로 정의될 수 있습니다. 진양성(True positives, TP)을 실제 양성(True positives, TP)과 거짓 음성(False negatives, FN)의 합(TP + FN)으로 나눈 것으로 나타낼 수 있습니다. 민감도(Sensitivity)라고도 불립니다.
+
+Recall은 실제 양성의 비율을 올바르게 예측합니다.
+
+수학적으로, Recall은 TP를 (TP + FN)으로 나눈 비율로 나타낼 수 있습니다.
+
+```python
+recall = TP / float(TP + FN)
+print('Recall or Sensitivity : {0:0.4f}'.format(recall))
+```
+
+True Positive Rate
+
+True Positive Rate은 Recall과 동의어입니다.
+
+```python
+true_positive_rate = TP / float(TP + FN)
+print('True Positive Rate : {0:0.4f}'.format(true_positive_rate))
+```
+
+False Positive Rate
+
+```python
+false_positive_rate = FP / float(FP + TN)
+print('False Positive Rate : {0:0.4f}'.format(false_positive_rate))
+```
+
+Specificity
+
+```python
+specificity = TN / (TN + FP)
+print('Specificity : {0:0.4f}'.format(specificity))
+```
+
+f1-점수는 정밀도와 재현율의 가중조화평균입니다. 가장 좋은 f1-점수는 1.0이며, 가장 나쁜 점수는 0.0입니다. f1-점수는 정밀도와 재현율의 조화평균입니다. 따라서 f1-점수는 정확도 측정에 비해 항상 낮습니다. 가중 평균 f1-점수는 분류기 모델을 비교하는 데 사용해야하며, 전체 정확도보다 더 중요합니다.
+
+Support는 데이터 세트에서 클래스의 실제 발생 횟수입니다.
+
+## 17. 임계값 조정
+
+```python
+y_pred_prob = logreg.predict_proba(X_test)[0:10]
+y_pred_prob
+```
+
+Observations
+- 각 행에서 숫자는 1의 합계를 이룹니다.
+- 2개의 열은 0과 1의 2개의 클래스에 해당합니다.
+
+  - 클래스 0 - 내일 비가 오지 않을 확률의 예측 확률.
+
+  - 클래스 1 - 내일 비가 올 확률의 예측 확률.
+
+- 예측 확률의 중요성
+
+  - 우리는 강수 또는 비가 오지 않을 확률에 따라 관측치를 순위별로 나눌 수 있습니다.
+
+- predict_proba 과정
+
+  - 확률을 예측합니다.
+
+  - 가장 높은 확률의 클래스를 선택합니다.
+
+- 분류 임계값
+
+  - 분류 임계값은 0.5입니다.
+
+  - 확률 > 0.5이면 클래스 1 - 비가 올 확률이 예측됩니다.
+
+  - 확률 < 0.5이면 클래스 0 - 비가 오지 않을 확률이 예측됩니다.
+
