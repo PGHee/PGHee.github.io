@@ -144,3 +144,265 @@ df[categorical].head()
 - 위치(Location), WindGustDir, WindDir9am, WindDir3pm, RainToday, RainTomorrow 6개의 범주형 변수가 있습니다.
 - RainToday와 RainTomorrow는 두 개의 이진 범주형 변수입니다.
 - RainTomorrow은 목표 변수입니다.
+
+범주형 변수 내의 문제 탐색
+
+먼저 범주형 변수를 탐색해보겠습니다.
+
+범주형 변수 내의 결측값(Missing values)
+
+```python
+df[categorical].isnull().sum()
+cat1 = [var for var in categorical if df[var].isnull().sum()!=0]
+print(df[cat1].isnull().sum())
+```
+
+범주형 변수 내 결측값 탐색 결과, WindGustDir, WindDir9am, WindDir3pm 및 RainToday 변수에만 결측값이 있는 것으로 확인됩니다.
+
+범주형 변수의 빈도수
+
+이제 범주형 변수의 빈도수를 확인하겠습니다.
+
+```python
+for var in categorical: 
+    print(df[var].value_counts())
+for var in categorical: 
+    print(df[var].value_counts()/np.float(len(df)))
+```
+
+레이블 수: 기수(cardinality)
+
+범주형 변수 내 레이블 수를 기수(cardinality)라고 합니다. 변수 내 레이블 수가 높으면 고기수(high cardinality)라고합니다. 고기수는 머신러닝 모델에서 일부 심각한 문제를 일으킬 수 있습니다. 따라서, 고기수를 확인하겠습니다.
+
+```python
+for var in categorical:
+    print(var, ' contains ', len(df[var].unique()), ' labels')
+```
+
+우리는 Date 변수가 전처리 되어야 함을 알 수 있습니다. 다음 섹션에서 전처리를 수행하겠습니다.
+
+다른 모든 변수는 상대적으로 적은 수의 변수를 포함합니다.
+
+Date 변수의 Feature Engineering
+
+```python
+df['Date'].dtypes
+```
+
+Date 변수의 데이터 유형이 객체(object)임을 확인할 수 있습니다. object로 인코딩된 날짜를 datetime 형식으로 파싱하겠습니다.
+
+```python
+df['Date'] = pd.to_datetime(df['Date'])
+df['Year'] = df['Date'].dt.year
+df['Year'].head()
+df['Month'] = df['Date'].dt.month
+df['Month'].head()
+df['Day'] = df['Date'].dt.day
+df['Day'].head()
+df.info()
+```
+
+Date 변수에서 생성된 세 개의 추가 열이 있음을 확인할 수 있습니다. 이제 데이터 집합에서 원래 Date 변수를 삭제하겠습니다.
+
+```python
+df.drop('Date', axis=1, inplace = True)
+df.head()
+```
+
+이제 데이터 집합에서 Date 변수가 삭제된 것을 확인할 수 있습니다.
+
+범주형 변수 탐색
+
+이제 하나씩 범주형 변수를 탐색하겠습니다
+
+```python
+categorical = [var for var in df.columns if df[var].dtype=='O']
+print('There are {} categorical variables\n'.format(len(categorical)))
+print('The categorical variables are :', categorical)
+```
+
+데이터 집합에는 6 개의 범주형 변수가 있습니다. Date 변수가 제거되었습니다. 먼저 범주형 변수에서 결측값을 확인하겠습니다.
+
+```python
+df[categorical].isnull().sum()
+```
+
+WindGustDir, WindDir9am, WindDir3pm, RainToday 변수에는 결측값이 포함되어 있습니다. 하나씩 탐색해보겠습니다.
+
+Location 변수 탐색
+
+```python
+print('Location contains', len(df.Location.unique()), 'labels')
+df.Location.unique()
+df.Location.value_counts()
+pd.get_dummies(df.Location, drop_first=True).head()
+```
+
+WindGustDir 변수 탐색
+
+```python
+print('WindGustDir contains', len(df['WindGustDir'].unique()), 'labels')
+df['WindGustDir'].unique()
+df.WindGustDir.value_counts()
+pd.get_dummies(df.WindGustDir, drop_first=True, dummy_na=True).head()
+pd.get_dummies(df.WindGustDir, drop_first=True, dummy_na=True).sum(axis=0)
+```
+
+WindDir9am 변수 탐색
+
+```python
+print('WindDir9am contains', len(df['WindDir9am'].unique()), 'labels')
+df['WindDir9am'].unique()
+df['WindDir9am'].value_counts()
+pd.get_dummies(df.WindDir9am, drop_first=True, dummy_na=True).head()
+pd.get_dummies(df.WindDir9am, drop_first=True, dummy_na=True).sum(axis=0)
+```
+
+WindDir9am 변수에 결측값이 10013개 있음을 알 수 있습니다.
+
+WindDir3pm 변수 탐색
+
+```python
+print('WindDir3pm contains', len(df['WindDir3pm'].unique()), 'labels')
+df['WindDir3pm'].unique()
+df['WindDir3pm'].value_counts()
+pd.get_dummies(df.WindDir3pm, drop_first=True, dummy_na=True).head()
+pd.get_dummies(df.WindDir3pm, drop_first=True, dummy_na=True).sum(axis=0)
+```
+
+WindDir3pm 변수에는 3778개의 결측값이 있습니다.
+
+RainToday 변수 탐색
+
+```python
+print('RainToday contains', len(df['RainToday'].unique()), 'labels')
+df['RainToday'].unique()
+df.RainToday.value_counts()
+pd.get_dummies(df.RainToday, drop_first=True, dummy_na=True).head()
+pd.get_dummies(df.RainToday, drop_first=True, dummy_na=True).sum(axis=0)
+```
+
+RainToday 변수에는 1406개의 결측값이 있습니다.
+
+수치 변수 탐색
+
+```python
+numerical = [var for var in df.columns if df[var].dtype!='O']
+print('There are {} numerical variables\n'.format(len(numerical)))
+print('The numerical variables are :', numerical)
+df[numerical].head()
+```
+
+수치형 변수 요약
+
+총 16 개의 수치형 변수가 있습니다.
+
+MinTemp, MaxTemp, Rainfall, Evaporation, Sunshine, WindGustSpeed, WindSpeed9am, WindSpeed3pm, Humidity9am, Humidity3pm, Pressure9am, Pressure3pm, Cloud9am, Cloud3pm, Temp9am 및 Temp3pm입니다.
+
+모든 수치형 변수는 연속형입니다.
+
+수치형 변수 내 문제점 탐색
+
+이제 수치형 변수를 탐색하겠습니다.
+
+수치형 변수에서 결측값 찾기
+
+```python
+df[numerical].isnull().sum()
+```
+
+16개의 수치 변수에 결측값이 모두 포함되어 있음을 알 수 있습니다.
+
+수치형 변수의 이상치 탐색
+
+```python
+print(round(df[numerical].describe()),2)
+```
+
+자세히 살펴보면, Rainfall, Evaporation, WindSpeed9am 및 WindSpeed3pm 열에는 이상치가 있을 수 있습니다.
+
+위 변수들에서 이상치를 시각화하기 위해 상자그림을 그려보겠습니다.
+
+```python
+plt.figure(figsize=(15,10))
+plt.subplot(2, 2, 1)
+fig = df.boxplot(column='Rainfall')
+fig.set_title('')
+fig.set_ylabel('Rainfall')
+plt.subplot(2, 2, 2)
+fig = df.boxplot(column='Evaporation')
+fig.set_title('')
+fig.set_ylabel('Evaporation')
+plt.subplot(2, 2, 3)
+fig = df.boxplot(column='WindSpeed9am')
+fig.set_title('')
+fig.set_ylabel('WindSpeed9am')
+plt.subplot(2, 2, 4)
+fig = df.boxplot(column='WindSpeed3pm')
+fig.set_title('')
+fig.set_ylabel('WindSpeed3pm')
+```
+
+위의 상자 그림은 이러한 변수에 특이치가 많다는 것을 확인합니다.
+
+변수의 분포 확인
+
+이제 분포를 확인하기 위해 히스토그램을 그려볼 것입니다. 정규 분포를 따르면 극단값 분석을 하겠습니다. 그렇지 않은 경우에는 IQR (Interquantile range)을 찾아볼 것입니다.
+
+```python
+plt.figure(figsize=(15,10))
+plt.subplot(2, 2, 1)
+fig = df.Rainfall.hist(bins=10)
+fig.set_xlabel('Rainfall')
+fig.set_ylabel('RainTomorrow')
+plt.subplot(2, 2, 2)
+fig = df.Evaporation.hist(bins=10)
+fig.set_xlabel('Evaporation')
+fig.set_ylabel('RainTomorrow')
+plt.subplot(2, 2, 3)
+fig = df.WindSpeed9am.hist(bins=10)
+fig.set_xlabel('WindSpeed9am')
+fig.set_ylabel('RainTomorrow')
+plt.subplot(2, 2, 4)
+fig = df.WindSpeed3pm.hist(bins=10)
+fig.set_xlabel('WindSpeed3pm')
+fig.set_ylabel('RainTomorrow')
+```
+
+모든 네 개의 변수가 치우쳐져(skewed) 있습니다. 그래서 IQR(Interquantile range)을 사용하여 이상치를 찾겠습니다.
+
+```python
+IQR = df.Rainfall.quantile(0.75) - df.Rainfall.quantile(0.25)
+Lower_fence = df.Rainfall.quantile(0.25) - (IQR * 3)
+Upper_fence = df.Rainfall.quantile(0.75) + (IQR * 3)
+print('Rainfall outliers are values < {lowerboundary} or > {upperboundary}'.format(lowerboundary=Lower_fence, upperboundary=Upper_fence))
+```
+
+강수량(Rainfall) 변수에서 최소값과 최대값은 각각 0.0과 371.0입니다. 따라서, 이상치는 3.2보다 큰 값들입니다.
+
+```python
+IQR = df.Evaporation.quantile(0.75) - df.Evaporation.quantile(0.25)
+Lower_fence = df.Evaporation.quantile(0.25) - (IQR * 3)
+Upper_fence = df.Evaporation.quantile(0.75) + (IQR * 3)
+print('Evaporation outliers are values < {lowerboundary} or > {upperboundary}'.format(lowerboundary=Lower_fence, upperboundary=Upper_fence))
+```
+
+Evaporation의 최소값과 최대값은 각각 0.0과 145.0입니다. 이에 따라, 이상치는 21.8보다 큰 값입니다.
+
+```python
+IQR = df.WindSpeed9am.quantile(0.75) - df.WindSpeed9am.quantile(0.25)
+Lower_fence = df.WindSpeed9am.quantile(0.25) - (IQR * 3)
+Upper_fence = df.WindSpeed9am.quantile(0.75) + (IQR * 3)
+print('WindSpeed9am outliers are values < {lowerboundary} or > {upperboundary}'.format(lowerboundary=Lower_fence, upperboundary=Upper_fence))
+```
+
+WindSpeed9am의 최솟값과 최댓값은 각각 0.0과 130.0입니다. 이에 따라 이상치는 값이 55.0보다 큰 값입니다.
+
+```python
+IQR = df.WindSpeed3pm.quantile(0.75) - df.WindSpeed3pm.quantile(0.25)
+Lower_fence = df.WindSpeed3pm.quantile(0.25) - (IQR * 3)
+Upper_fence = df.WindSpeed3pm.quantile(0.75) + (IQR * 3)
+print('WindSpeed3pm outliers are values < {lowerboundary} or > {upperboundary}'.format(lowerboundary=Lower_fence, upperboundary=Upper_fence))
+```
+
+WindSpeed3pm의 최소값은 0.0이고 최대값은 87.0입니다. 따라서, 이상치는 57.0보다 큰 값입니다.
