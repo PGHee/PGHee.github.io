@@ -78,8 +78,69 @@ p < 0.5 => 클래스 = 0
 순서 로지스틱 회귀에서 대상 변수는 세 개 이상의 순서형 범주(ordinal categories)를 가집니다. 따라서 범주에 내재된 순서가 있습니다. 예를 들어, 학생의 성적은 poor, average, good, excellent와 같이 분류될 수 있습니다.
 
 ## 5. 라이브러리 가져오기
+```python
+import numpy as np
+import pandas as pd 
+import matplotlib.pyplot as plt 
+import seaborn as sns 
+%matplotlib inline
+import os
+
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+        
+import warnings
+warnings.filterwarnings('ignore')
+```
 
 ## 6. 데이터셋 가져오기
+```python
+data = '/kaggle/input/weather-dataset-rattle-package/weatherAUS.csv'
+
+df = pd.read_csv(data)
+```
 
 ## 7. 탐색적 데이터 분석
 
+이제 데이터를 탐색하여 데이터에 대한 통찰력을 얻겠습니다.
+
+```python
+df.shape
+```
+
+우리는 데이터 세트에 142193개의 인스턴스와 24개의 변수가 있음을 알 수 있습니다.
+
+```python
+df.head()
+col_names = df.columns
+col_names
+```
+
+RISK_MM 변수 삭제
+
+데이터 세트 설명에 따르면, RISK_MM 피처 변수를 제거해야합니다. 따라서 다음과 같이 제거해야합니다.
+
+```python
+df.drop(['RISK_MM'], axis=1, inplace=True)
+df.info()
+```
+
+변수 유형
+
+이 섹션에서는 데이터 집합을 범주형 변수와 수치형 변수로 구분합니다. 데이터 집합에는 범주형 변수와 수치형 변수가 혼합되어 있습니다. 범주형 변수는 데이터 유형이 객체입니다. 수치형 변수는 데이터 유형이 float64입니다.
+
+우선, 범주형 변수를 찾겠습니다.
+
+```python
+categorical = [var for var in df.columns if df[var].dtype=='O']
+print('There are {} categorical variables\n'.format(len(categorical)))
+print('The categorical variables are :', categorical)
+df[categorical].head()
+```
+
+범주형 변수 요약
+- 날짜 변수가 있습니다. 이것은 Date 열로 표시됩니다.
+- 위치(Location), WindGustDir, WindDir9am, WindDir3pm, RainToday, RainTomorrow 6개의 범주형 변수가 있습니다.
+- RainToday와 RainTomorrow는 두 개의 이진 범주형 변수입니다.
+- RainTomorrow은 목표 변수입니다.
