@@ -380,7 +380,7 @@ c:\Users\박건희\contoso\venv\Lib\site-packages\sklearn\base.py:439: UserWarni
 </pre>
 
 
-##Flask 앱 빌드
+## Flask 앱 빌드
 
 ![경로 지정](https://user-images.githubusercontent.com/117708673/235430221-500a5d08-6f27-44b0-a908-9750a509c6d7.png)
 
