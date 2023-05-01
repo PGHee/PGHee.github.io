@@ -1,10 +1,7 @@
 ---
-layout: single
-title:  "UFO웹앱 구현하"
-categories: coding
-tag: [python, blog, jekyll]
-toc: true
-author_profile: false
+layout: post
+title:  "UFO 웹앱 구현하기"
+published: true
 ---
 
 <head>
