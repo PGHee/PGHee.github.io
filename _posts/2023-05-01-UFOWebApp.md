@@ -404,3 +404,133 @@ pandas
 numpy
 flask
 ```
+
+4. 이제 터미널에서 web-app 디렉토리로 이동합니다 .
+
+```
+cd web-app
+```
+
+5. 터미널 유형에서 pip를 통해 requirements.txtpip install 에 나열된 라이브러리를 설치합니다.
+
+```
+pip install -r requirements.txt
+```
+
+6. 그 후 아래에서 지정하는 위치에 각 파일을 생성합니다.
+  6-1. 루트에 app.py를 만듭니다 .
+  6-2. 템플릿 디렉토리 에 index.html을 생성합니다 .
+  6-3. static/css 디렉토리 에 styles.css를 생성합니다 .
+  
+7. styles.css 파일을 빌드합니다.
+```
+body {
+	width: 100%;
+	height: 100%;
+	font-family: 'Helvetica';
+	background: black;
+	color: #fff;
+	text-align: center;
+	letter-spacing: 1.4px;
+	font-size: 30px;
+}
+
+input {
+	min-width: 150px;
+}
+
+.grid {
+	width: 300px;
+	border: 1px solid #2d2d2d;
+	display: grid;
+	justify-content: center;
+	margin: 20px auto;
+}
+
+.box {
+	color: #fff;
+	background: #2d2d2d;
+	padding: 12px;
+	display: inline-block;
+}
+```
+
+8. 다음으로 index.html 파일을 빌드합니다 .
+```
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>🛸 UFO Appearance Prediction! 👽</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  </head>
+
+  <body>
+    <div class="grid">
+
+      <div class="box">
+
+        <p>According to the number of seconds, latitude and longitude, which country is likely to have reported seeing a UFO?</p>
+
+        <form action="{{ url_for('predict')}}" method="post">
+          <input type="number" name="seconds" placeholder="Seconds" required="required" min="0" max="60" />
+          <input type="text" name="latitude" placeholder="Latitude" required="required" />
+          <input type="text" name="longitude" placeholder="Longitude" required="required" />
+          <button type="submit" class="btn">Predict country where the UFO is seen</button>
+        </form>
+
+        <p>{{ prediction_text }}</p>
+
+      </div>
+
+    </div>
+
+  </body>
+</html>
+```
+
+9. app.py도 빌드합니다.
+```
+import numpy as np
+from flask import Flask, request, render_template
+import pickle
+
+app = Flask(__name__)
+
+model = pickle.load(open("./ufo-model.pkl", "rb"))
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+@app.route("/predict", methods=["POST"])
+def predict():
+
+    int_features = [int(x) for x in request.form.values()]
+    final_features = [np.array(int_features)]
+    prediction = model.predict(final_features)
+
+    output = prediction[0]
+
+    countries = ["Australia", "Canada", "Germany", "UK", "US"]
+
+    return render_template(
+        "index.html", prediction_text="Likely country: {}".format(countries[output])
+    )
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+
+# 결과
+웹 앱을 구현한 사이트로 이동해보면 다음과 같이 웹 앱이 빌드됩니다.
+![웹앱 구현 과제](https://user-images.githubusercontent.com/117708673/235430752-f5c94cbb-7658-4541-b034-6f30a9048a37.png)
+
+앞에서 설정한대로,
+Seconds를 1~60 사이로 입력받아 탐색 시간으로 이용하고,
+Latitude와 Longtitude를 입력받아 위도와 경도로 이용하여
+ufo가 발견된 국가의 위치를 추정합니다.
