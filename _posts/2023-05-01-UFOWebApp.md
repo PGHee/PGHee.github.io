@@ -419,11 +419,15 @@ pip install -r requirements.txt
 ```
 
 6. 그 후 아래에서 지정하는 위치에 각 파일을 생성합니다.
+
   6-1. 루트에 app.py를 만듭니다 .
+  
   6-2. 템플릿 디렉토리 에 index.html을 생성합니다 .
+  
   6-3. static/css 디렉토리 에 styles.css를 생성합니다 .
   
 7. styles.css 파일을 빌드합니다.
+
 ```
 body {
 	width: 100%;
