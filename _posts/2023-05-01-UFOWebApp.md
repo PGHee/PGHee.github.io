@@ -385,8 +385,8 @@ c:\Users\박건희\contoso\venv\Lib\site-packages\sklearn\base.py:439: UserWarni
 ![경로 지정](https://user-images.githubusercontent.com/117708673/235430221-500a5d08-6f27-44b0-a908-9750a509c6d7.png)
 
 사진에서 보이는 것처럼
-1. ufo-model.pkl 파일이 있는 notebook.ipynb 파일 옆에 web-app 이라는 폴더를 생성하여 시작합니다 .
-2. 해당 폴더에 css 폴더가 있는 static 폴더 와 templates 폴더를 세 개 더 만듭니다.
+◆ ufo-model.pkl 파일이 있는 notebook.ipynb 파일 옆에 web-app 이라는 폴더를 생성하여 시작합니다 .
+◆ 해당 폴더에 css 폴더가 있는 static 폴더 와 templates 폴더를 세 개 더 만듭니다.
 
 ```
 web-app/
@@ -397,7 +397,7 @@ notebook.ipynb
 ufo-model.pkl
 ```
 
-3. web-app 폴더 에 가장 먼저 생성할 파일은 requirements.txt 파일입니다. JavaScript 앱의 package.json 과 마찬가지로 이 파일은 앱에 필요한 종속성을 나열합니다. requirements.txt 에 다음 줄을 추가합니다.
+◆ web-app 폴더 에 가장 먼저 생성할 파일은 requirements.txt 파일입니다. JavaScript 앱의 package.json 과 마찬가지로 이 파일은 앱에 필요한 종속성을 나열합니다. requirements.txt 에 다음 줄을 추가합니다.
 
 ```
 scikit-learn
@@ -406,27 +406,25 @@ numpy
 flask
 ```
 
-4. 이제 터미널에서 web-app 디렉토리로 이동합니다 .
+◆ 이제 터미널에서 web-app 디렉토리로 이동합니다 .
 
 ```
 cd web-app
 ```
 
-5. 터미널 유형에서 pip를 통해 requirements.txtpip install 에 나열된 라이브러리를 설치합니다.
+◆ 터미널 유형에서 pip를 통해 requirements.txtpip install 에 나열된 라이브러리를 설치합니다.
 
 ```
 pip install -r requirements.txt
 ```
 
-6. 그 후 아래에서 지정하는 위치에 각 파일을 생성합니다.
+◆ 그 후 아래에서 지정하는 위치에 각 파일을 생성합니다.
 
-  6-1. 루트에 app.py를 만듭니다 .
+  - 루트에 app.py를 만듭니다 .
+  - 템플릿 디렉토리 에 index.html을 생성합니다 .
+  - static/css 디렉토리 에 styles.css를 생성합니다 .
   
-  6-2. 템플릿 디렉토리 에 index.html을 생성합니다 .
-  
-  6-3. static/css 디렉토리 에 styles.css를 생성합니다 .
-  
-7. styles.css 파일을 빌드합니다.
+◆ styles.css 파일을 빌드합니다.
 
 ```
 
@@ -462,7 +460,7 @@ input {
 
 ```
 
-8. 다음으로 index.html 파일을 빌드합니다 .
+◆ 다음으로 index.html 파일을 빌드합니다 .
 
 ```
 
@@ -499,7 +497,7 @@ input {
 
 ```
 
-9. app.py도 빌드합니다.
+◆ app.py도 빌드합니다.
 
 ```
 
