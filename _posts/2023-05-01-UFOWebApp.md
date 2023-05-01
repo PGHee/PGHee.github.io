@@ -429,6 +429,7 @@ pip install -r requirements.txt
 7. styles.css 파일을 빌드합니다.
 
 ```
+
 body {
 	width: 100%;
 	height: 100%;
@@ -458,10 +459,13 @@ input {
 	padding: 12px;
 	display: inline-block;
 }
+
 ```
 
 8. 다음으로 index.html 파일을 빌드합니다 .
+
 ```
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -492,6 +496,7 @@ input {
 
   </body>
 </html>
+
 ```
 
 9. app.py도 빌드합니다.
