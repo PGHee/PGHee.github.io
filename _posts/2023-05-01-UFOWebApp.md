@@ -385,7 +385,9 @@ c:\Users\박건희\contoso\venv\Lib\site-packages\sklearn\base.py:439: UserWarni
 ![경로 지정](https://user-images.githubusercontent.com/117708673/235430221-500a5d08-6f27-44b0-a908-9750a509c6d7.png)
 
 사진에서 보이는 것처럼
+
 ◆ ufo-model.pkl 파일이 있는 notebook.ipynb 파일 옆에 web-app 이라는 폴더를 생성하여 시작합니다 .
+
 ◆ 해당 폴더에 css 폴더가 있는 static 폴더 와 templates 폴더를 세 개 더 만듭니다.
 
 ```
