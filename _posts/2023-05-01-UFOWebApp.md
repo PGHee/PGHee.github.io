@@ -381,6 +381,7 @@ c:\Users\박건희\contoso\venv\Lib\site-packages\sklearn\base.py:439: UserWarni
 
 
 ##Flask 앱 빌드
+
 ![경로 지정](https://user-images.githubusercontent.com/117708673/235430221-500a5d08-6f27-44b0-a908-9750a509c6d7.png)
 
 사진에서 보이는 것처럼
@@ -527,7 +528,9 @@ if __name__ == "__main__":
 
 
 # 결과
+
 웹 앱을 구현한 사이트로 이동해보면 다음과 같이 웹 앱이 빌드됩니다.
+
 ![웹앱 구현 과제](https://user-images.githubusercontent.com/117708673/235430752-f5c94cbb-7658-4541-b034-6f30a9048a37.png)
 
 앞에서 설정한대로,
