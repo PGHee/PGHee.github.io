@@ -76,7 +76,10 @@ published: true
 </head>
 
 
+# ML모델을 이용한 웹 앱 빌드하기
 
+## 데이터 정리하기
+기본 설정 및 데이터 가져오기, 해당 포스터에서는 UFO를 목격했던 데이터들을 불러옵니다.
 ```python
 import pandas as pd
 import numpy as np
@@ -192,7 +195,7 @@ ufos.head()
 </div>
 
 
-
+ufo 데이터를 작은 데이터 프레임으로 변환합니다. 
 ```python
 ufos = pd.DataFrame({'Seconds': ufos['duration (seconds)'], 'Country': ufos['country'],'Latitude': ufos['latitude'],'Longitude': ufos['longitude']})
 
@@ -203,6 +206,8 @@ ufos.Country.unique()
 array(['us', nan, 'gb', 'ca', 'au', 'de'], dtype=object)
 </pre>
 
+
+null값의 삭제와 관찰된 시간이 1초 이상부터 60초 이내인 데이터만 남기고 전부 삭제합니다. 
 ```python
 ufos.dropna(inplace=True)
 
@@ -225,6 +230,8 @@ dtypes: float64(3), object(1)
 memory usage: 1010.3+ KB
 </pre>
 
+
+국가의 텍스트 값을 숫자로 변환합니다. 
 ```python
 from sklearn.preprocessing import LabelEncoder
 
@@ -297,7 +304,7 @@ ufos.head()
 </table>
 </div>
 
-
+## 모델 구축 
 
 ```python
 from sklearn.model_selection import train_test_split
@@ -310,7 +317,7 @@ y = ufos['Country']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 ```
 
-
+로지스틱 회귀를 통한 모델 교육합니다. 
 ```python
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.linear_model import LogisticRegression
@@ -350,6 +357,11 @@ Please also refer to the documentation for alternative solver options:
   n_iter_i = _check_optimize_result(
 </pre>
 
+
+## 모델 '피클'
+
+피클은 Python 개체 구조를 직렬화 및 역직렬화하는 Python 모듈입니다.
+해당 모듈을 통해 위에서 교육시킨 모델을 '피클'화하여 웹에서 사용할 수 있도록 구조를 직렬화하거나 평면화합니다. 
 ```python
 import pickle
 model_filename = 'ufo-model.pkl'
@@ -366,3 +378,29 @@ print(model.predict([[50,44,-12]]))
 c:\Users\박건희\contoso\venv\Lib\site-packages\sklearn\base.py:439: UserWarning: X does not have valid feature names, but LogisticRegression was fitted with feature names
   warnings.warn(
 </pre>
+
+
+##Flask 앱 빌드
+![경로 지정](https://user-images.githubusercontent.com/117708673/235430221-500a5d08-6f27-44b0-a908-9750a509c6d7.png)
+
+사진에서 보이는 것처럼
+1. ufo-model.pkl 파일이 있는 notebook.ipynb 파일 옆에 web-app 이라는 폴더를 생성하여 시작합니다 .
+2. 해당 폴더에 css 폴더가 있는 static 폴더 와 templates 폴더를 세 개 더 만듭니다.
+
+```
+web-app/
+  static/
+    css/
+  templates/
+notebook.ipynb
+ufo-model.pkl
+```
+
+3. web-app 폴더 에 가장 먼저 생성할 파일은 requirements.txt 파일입니다. JavaScript 앱의 package.json 과 마찬가지로 이 파일은 앱에 필요한 종속성을 나열합니다. requirements.txt 에 다음 줄을 추가합니다.
+
+```
+scikit-learn
+pandas
+numpy
+flask
+```
