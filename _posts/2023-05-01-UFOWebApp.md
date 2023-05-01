@@ -534,6 +534,7 @@ if __name__ == "__main__":
 ![웹앱 구현 과제](https://user-images.githubusercontent.com/117708673/235430752-f5c94cbb-7658-4541-b034-6f30a9048a37.png)
 
 앞에서 설정한대로,
-Seconds를 1~60 사이로 입력받아 탐색 시간으로 이용하고,
-Latitude와 Longtitude를 입력받아 위도와 경도로 이용하여
-ufo가 발견된 국가의 위치를 추정합니다.
+Seconds를 1~60 사이의 탐색시간을 입력받고,
+Latitude와 Longtitude 칸을 통해 위도와 경도를 입력받습니다.
+
+위에서 구현한 웹 앱을 통해 입력받은 탐색 시간과 위도와 경도로 어느 나라에서 발견되었다고 보고된 것인지 확인할 수 있습니다.
