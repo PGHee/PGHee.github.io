@@ -500,7 +500,9 @@ input {
 ```
 
 9. app.py도 빌드합니다.
+
 ```
+
 import numpy as np
 from flask import Flask, request, render_template
 import pickle
@@ -533,6 +535,7 @@ def predict():
 
 if __name__ == "__main__":
     app.run(debug=True)
+    
 ```
 
 
